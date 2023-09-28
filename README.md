@@ -1,2 +1,20 @@
-# Taskiller
-A widget for fixing Windows apps stuck in full-screen exclusivity
+# 一个用于解决Windows全屏独占应用卡死的小工具
+
+最近打Apex的时候偶尔想测试下DX11和DX12的一些区别，偶尔就会遇到全屏独占“卡死”的问题。说是卡死，其实电脑运行一切正常，只是应用程序全屏独占且无法退出了，Win键还是能正常唤出任务栏，也能在任务栏预览应用程序界面，但问题就是鼠标无法聚焦于任何其他应用程序，Win+Tab切桌面都不行，Ctrl+Shift+Esc唤出任务管理器可以，但是无法聚焦就没法用它关闭程序，Alt+F4这种土办法更没用……通常这种情况下只能重启电脑了，很麻烦，tmd我电脑明明没卡死就是屏幕被独占了结果啥也做不了，我相信很多同学都会遇到这种问题
+
+我百度找了很多种解决办法，最终实践下来可行的只有一种——用Win键输入cmd，以管理员身份启动cmd，此时你已经聚焦在cmd可以输入但是看不到cmd界面，盲打输入tasklist，按下Win把鼠标悬停于cmd任务栏图标预览，确认自己要关闭的程序的PID，然后盲打taskkill /f /pid [独占卡死程序的PID]，回车，程序就被强制关闭了
+
+这种方法很麻烦，先不提盲打输入的问题，就算你记住了命令，但要是任务栏预览的时候程序较多，卡死的程序不在cmd画面内，就完蛋了，老实重启吧。因此我自己优化了一下这个方法，用.cmd脚本自动化了这个过程。当你遇到全屏独占卡死的时候，输入Win+S（或直接按Win也行），启动我写的程序，它会自动申请获取管理员权限，然后将当前正在运行程序的内存占用升序排列（由于全屏独占卡死的程序通常占用较多内存），这样确保你能在预览中找到它的PID，然后直接输入你要终止的程序的PID就行了，全程不需要输入任何指令
+
+具体方法：创建一个.txt文件，将下面的代码复制进去，然后将文件后缀名改为.cmd，或直接下载仓库内这个.cmd文件。创建一个快捷方式，将快捷方式命名为taskiller（名字随便，少打一个k是故意的🙂）剪切进Programs文件夹（C:\Users\用户名\AppData\Roaming\Microsoft\Windows\Start Menu\Programs）。（可选）按下Win+S，输入taskiller，选择固定到开始菜单，然后就可以在开始菜单中找到它了
+
+```bat
+%1 mshta vbscript:CreateObject("Shell.Application").ShellExecute("cmd.exe","/c %~s0 ::","","runas",1)(window.close)&&exit cd /d "%~dp0"
+tasklist | sort /+65
+set /p var=Please input the PID of the task you want to end:
+taskkill /f /pid %var%
+```
+
+可以先尝试下效果。当你遇到全屏独占“卡死”的时候，只要按下Win+S（或直接按Win也行），输入taskiller，回车运行该程序（如果固定到开始菜单的话，也可以直接鼠标点击开始菜单上的这个程序）。程序就会自动获取管理员权限，然后利用Win键后鼠标悬停任务栏预览cmd界面，找到要终止的程序的PID，输入PID，回车，程序就会被强制关闭了，不用谢。随意转载不用注明出处
+
+另一种似乎可行的解决方法：【win10如何脱离游戏全屏卡死（指任务管理器切不出来）】 https://www.bilibili.com/video/BV1dA411s785
